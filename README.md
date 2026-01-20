@@ -31,8 +31,10 @@ As part of this exercise, you will design and implement the necessary backend an
    `npm install`  
 2. The `.env` file is already provided. If you prefer to regenerate it:  
    `cp .env.example .env`  
-3. Run the app. If you need to re-run migrations or create new ones:  
-   `php artisan migrate`  
+3. Run migrations or create new ones:  
+   `php artisan migrate`
+4. Run the app
+   `composer run dev`, access through `localhost:8000`
 
 
 
