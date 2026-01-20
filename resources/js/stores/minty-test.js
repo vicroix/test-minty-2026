@@ -1,44 +1,42 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 export const useMintyTestStore = defineStore('minty-test', () => {
     // State
-    const count = ref(0);
-    const name = ref('Minty');
-
-    // Getters
-    const doubleCount = computed(() => count.value * 2);
-    const greeting = computed(() => `Hello from ${name.value}!`);
+    const testUser = ref('Candidato/a');
+    const bookings = ref([]);
+    const loading = ref(false);
+    const error = ref(null);
 
     // Actions
-    function increment() {
-        count.value++;
-    }
+    async function getBookings() {
+        loading.value = true;
+        error.value = null;
 
-    function decrement() {
-        count.value--;
-    }
+        try {
+            const response = await fetch('/api/bookings');
 
-    function setName(newName) {
-        name.value = newName;
-    }
+            if (!response.ok) {
+                throw new Error('Failed to fetch bookings');
+            }
 
-    function reset() {
-        count.value = 0;
-        name.value = 'Minty';
+            const data = await response.json();
+            bookings.value = data;
+        } catch (err) {
+            error.value = err.message;
+            console.error('Error fetching bookings:', err);
+        } finally {
+            loading.value = false;
+        }
     }
 
     return {
         // State
-        count,
-        name,
-        // Getters
-        doubleCount,
-        greeting,
+        testUser,
+        bookings,
+        loading,
+        error,
         // Actions
-        increment,
-        decrement,
-        setName,
-        reset,
+        getBookings,
     };
 });
