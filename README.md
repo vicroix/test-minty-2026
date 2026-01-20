@@ -59,6 +59,6 @@ The project includes a minimal setup to help you focus on the exercise:
 | Display Bookings | Using the Pinia store, display the bookings in a **grid layout**. Ensure all relevant fields are shown and use **Tailwind CSS** to style the booking cards. |
 | Implement Guest Functionality | Extend the application to allow complete management of guest data. Users should be able to **create, read, update, and delete** guest entries directly linked to individual bookings. |
 | Guest Interface | Implement the guest functionality so that it is accessible **within each booking card**. You are free to choose the approach and layout that provides the best UX for managing guests. |
-| Extra Improvements (Optional) | If you still have extra time, consider adding polishing features such as a dynamic search to filter bookings by guest name and pagination for the bookings list. Focus on user experience and performance. |
+| Extra Improvements (Optional) | If you still have extra time, consider adding polishing features such as a dynamic search to filter bookings by guest name and pagination for the bookings list. Focus on improving user experience. |
 
 # Good luck!
