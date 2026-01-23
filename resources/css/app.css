@@ -7,6 +7,50 @@
     --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/fonts/Poppins-Regular.ttf') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/fonts/Poppins-Bold.ttf') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Fonts */
+    --font-headings: 'Poppins', sans-serif;
+    --font-body: 'Sans', sans-serif;
+
+    /* Colors */
+    --primary: hsl(262 88% 47%);
+    --background: hsl(0 0% 96.1%);
+    --card: hsl(0, 0%, 100%);
+}
+
 body{
-    padding-inline: 3.75rem;
+    font-family: var(--font-body);
+    background-color: var(--background);
+}
+
+.text-primary{
+    color: var(--primary);
+}
+
+.text-muted-foreground{
+    color: hsl(0 0% 45.1%);
+}
+
+h1, h2, h3, h4, h5, h6{
+    font-family: var(--font-headings);
+}
+
+.card{
+    background-color: var(--card);
 }

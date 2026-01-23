@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class MintyTestController extends Controller
 {
+    /**
+     * Display a listing of bookings with their guests.
+     */
     public function getBookings()
     {
         try {

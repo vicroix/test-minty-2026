@@ -5,28 +5,121 @@ import moment from 'moment';
 
 import { useMintyTestStore } from '../stores/minty-test';
 
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
-const { t } = useI18n();
+
 const store = useMintyTestStore();
+const { t } = useI18n();
 
+const showGuestModal = ref(false);
+const modalMode = ref('create'); // "create" or "edit"
+const selectedBookingId = ref(null);
+const selectedGuest = ref(null);
+
+const guestForm = ref({
+    name: '',
+    age: null,
+});
+
+/**
+ * Open modal to create a new guest.
+ *
+ * @param {number} bookingId
+ */
+function openCreateGuestModal(bookingId) {
+    modalMode.value = 'create';
+    selectedBookingId.value = bookingId;
+    selectedGuest.value = null;
+    guestForm.value = { name: '', age: null };
+    showGuestModal.value = true;
+}
+
+/**
+ * Open modal to edit an existing guest.
+ *
+ * @param {number} bookingId
+ * @param {Object} guest
+ */
+function openEditGuestModal(bookingId, guest) {
+    modalMode.value = 'edit';
+    selectedBookingId.value = bookingId;
+    selectedGuest.value = guest;
+    guestForm.value = { name: guest.name, age: guest.age };
+    showGuestModal.value = true;
+}
+
+/**
+ * Delete a guest from a booking.
+ *
+ * @param {number} guestId
+ */
+async function deleteGuestFromBooking(guestId) {
+    try {
+
+        await store.deleteGuest(guestId);
+
+        await store.getBookings();
+
+        console.log('Guest deleted:', guestId);
+    } catch (err) {
+        console.error('Error deleting guest:', err);
+    }
+}
+
+/**
+ * Close guest modal and reset state.
+ */
+function closeGuestModal() {
+    showGuestModal.value = false;
+    selectedGuest.value = null;
+};
+
+/**
+ * Submit guest form (create or update).
+ */
+async function submitGuestForm() {
+    try {
+        if (modalMode.value === 'create') {
+            await store.addGuest(selectedBookingId.value, {
+                ...guestForm.value,
+                booking_id: selectedBookingId.value
+            });
+        } else {
+            await store.updateGuest(selectedGuest.value.id, guestForm.value);
+        }
+        closeGuestModal();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Initial data load
+|--------------------------------------------------------------------------
+|
+| Fetch bookings when the page is mounted.
+|
+*/
 onMounted(() => {
     store.getBookings();
 });
 </script>
 
 <template>
-    <div class="flex flex-col gap-10">
+    <div class="flex flex-col gap-10 container mx-auto px-4 py-8">
 
         <Head title="Minty Test 2026" />
-        <div class="border-b">
-            <h1 class="flex justify-center py-5 text-xl">Wookings</h1>
-        </div>
+        <header class="text-center mb-12">
+            <h1 class="flex justify-center text-4xl md:text-5xl font-bold text-primary tracking-tight">Manage
+                Bookings</h1>
+            <p class="text-muted-foreground mt-2 text-lg">Your modern booking management dashboard.</p>
+        </header>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             <!-- Iterate over all bookings -->
             <div v-for="booking in store.bookings" :key="booking.id"
-                class="rounded border p-4 shadow transition-all duration-200 ease-in-out hover:bg-amber-100/55 hover:shadow-lg">
+                class=" card h-full overflow-hidden rounded-xl p-4 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <p><strong>ID:</strong> {{ booking.id }}</p>
                 <p><strong>Check-in:</strong> {{ booking.checkin_at }}</p>
                 <p><strong>Check-out:</strong> {{ booking.checkout_at }}</p>
@@ -35,7 +128,7 @@ onMounted(() => {
                 <div class="flex flex-col gap-4 mt-4  border-t">
                     <div class="flex items-center gap-1 mt-4">
                         <strong>Guests:</strong>
-                        <button class="cursor-pointer" title="Add guest">
+                        <button class="cursor-pointer" title="Add guest" @click="openCreateGuestModal(booking.id)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 20 20"
                                 class="text-green-600">
                                 <path fill="currentColor"
@@ -51,16 +144,16 @@ onMounted(() => {
                                     {{ guest.name }} <span v-if="guest.age">({{ guest.age }} años)</span>
                                 </div>
                                 <div class="flex gap-3">
-                                    <button title="Guest edit">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 512 512"
-                                            class="cursor-pointer text-blue-600">
+                                    <button title="Guest edit" @click="openEditGuestModal(booking.id, guest)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+                                            viewBox="0 0 512 512" class="cursor-pointer text-blue-600">
                                             <path fill="currentColor"
                                                 d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2l33.9-33.9l104 104l33.9 33.9l-33.9 33.9l-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3.9 481zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6L58.6 453l86.9-24.1c6.4-1.8 12.2-5.1 17-9.7l-70.6-69.7zm354-146.1l-104-104l-34-33.9l44.9-44.9C366.4 7 384.8-.6 404-.6s37.6 7.6 51.1 21.2l35.7 35.7c13.6 13.6 21.2 32 21.2 51.1s-7.6 37.6-21.2 51.1l-44.9 44.9z" />
                                         </svg>
                                     </button>
-                                    <button title="Remove guest">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="cursor-pointer text-red-500"
-                                            viewBox="0 0 24 24">
+                                    <button title="Remove guest" @click="deleteGuestFromBooking(guest.id)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            class="cursor-pointer text-red-500" viewBox="0 0 24 24">
                                             <path fill="currentColor"
                                                 d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12l1.41 1.41L13.41 14l2.12 2.12l-1.41 1.41L12 15.41l-2.12 2.12l-1.41-1.41L10.59 14zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
                                         </svg>
@@ -74,6 +167,34 @@ onMounted(() => {
                 <!-- Future buttons -->
                 <div class="mt-2 flex gap-2"></div>
             </div>
+        </div>
+    </div>
+    <!-- Modal Overlay -->
+    <div v-if="showGuestModal" class="fixed inset-0 bg-gray-300 bg-opacity-40 flex justify-center items-center z-50">
+        <!-- Modal Content -->
+        <div class="bg-white rounded-lg p-6 w-80">
+            <h2 class="text-lg font-bold mb-4">
+                {{ modalMode === 'create' ? 'Add Guest' : 'Edit Guest' }}
+            </h2>
+
+            <form @submit.prevent="submitGuestForm">
+                <div class="mb-3">
+                    <label class="block mb-1">Name</label>
+                    <input v-model="guestForm.name" type="text" class="w-full border rounded px-2 py-1" />
+                </div>
+                <div class="mb-3">
+                    <label class="block mb-1">Age</label>
+                    <input v-model="guestForm.age" type="number" min="0" class="w-full border rounded px-2 py-1" />
+                </div>
+
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" @click="closeGuestModal"
+                        class="cursor-pointer px-3 py-1 rounded border">Cancel</button>
+                    <button type="submit" class="cursor-pointer px-3 py-1 rounded bg-green-600 text-white">
+                        {{ modalMode === 'create' ? 'Add' : 'Update' }}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </template>
