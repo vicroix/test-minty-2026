@@ -24,33 +24,148 @@
 }
 
 :root {
-    /* Fonts */
+    /*----------------------------------
+    | Fonts
+    ----------------------------------*/
     --font-headings: 'Poppins', sans-serif;
     --font-body: 'Sans', sans-serif;
 
-    /* Colors */
+    /*----------------------------------
+    | Primary colors
+    ----------------------------------*/
     --primary: hsl(262 88% 47%);
+    --primary-hover: hsla(262, 88%, 47%, 0.8);
+    --on-primary: hsl(0 0% 100%);
+
+    /*----------------------------------
+    | Backgrounds
+    ----------------------------------*/
     --background: hsl(0 0% 96.1%);
     --card: hsl(0, 0%, 100%);
+    --border: hsl(0 0% 90.8%);
+    --overlay-bg: hsl(0 0% 0% / 0.7);
+
+    /*----------------------------------
+    | Text colors
+    ----------------------------------*/
+    --muted-foreground: hsl(0 0% 45.1%);
+    --text-destructive: hsl(0 84.2% 90.5%);
+
+    /*----------------------------------
+    | Accent / secondary colors
+    ----------------------------------*/
+    --accent: hsl(255 100% 92% / 0.5);
+    --accent-foreground: hsla(262, 35%, 43%, 0.2);
 }
 
-body{
+/*----------------------------------
+| Global Styles
+----------------------------------*/
+body {
     font-family: var(--font-body);
     background-color: var(--background);
 }
 
-.text-primary{
-    color: var(--primary);
-}
-
-.text-muted-foreground{
-    color: hsl(0 0% 45.1%);
-}
-
-h1, h2, h3, h4, h5, h6{
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-headings);
 }
 
-.card{
+/*----------------------------------
+| Typography
+----------------------------------*/
+.text-primary {
+    color: var(--primary);
+}
+
+.text-muted-foreground {
+    color: var(--muted-foreground);
+}
+
+/*----------------------------------
+| Components
+----------------------------------*/
+.card {
     background-color: var(--card);
+}
+
+.modal-overlay {
+    background-color: var(--overlay-bg);
+}
+
+.modal-content {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+}
+
+.input {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/*----------------------------------
+| Buttons
+----------------------------------*/
+.btn-submit {
+    background-color: var(--primary);
+    color: var(--on-primary);
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-item-actions {
+    background-color: var(--accent);
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-item-actions:hover {
+    background-color: var(--accent-foreground);
+    color: var(--primary);
+}
+
+.btn-edit-guest {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-edit-guest:hover {
+    background-color: var(--accent-foreground);
+    color: var(--primary);
+}
+
+.btn-delete-guest {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-delete-guest:hover {
+    background-color: var(--text-destructive);
+}
+
+/*----------------------------------
+| Background / Colors
+----------------------------------*/
+.bg-border {
+    background-color: var(--border);
+}
+
+.bg-accent {
+    background-color: var(--accent);
+}
+
+/*----------------------------------
+| Spinner / Misc
+----------------------------------*/
+.color-sping {
+    color: var(--primary);
 }

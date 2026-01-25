@@ -13,7 +13,7 @@ export const useMintyTestStore = defineStore('minty-test', {
         async getBookings() {
             try {
                 const response = await fetch('/api/bookings');
-
+                
                 if (!response.ok) {
                     throw new Error('Failed to fetch bookings');
                 }
@@ -51,7 +51,7 @@ export const useMintyTestStore = defineStore('minty-test', {
                 } else {
                     console.error('Failed to create guest');
                 }
-
+                
                 await this.getBookings();
             } catch (err) {
                 console.error('Error creating guest:', err);

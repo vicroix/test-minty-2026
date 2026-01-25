@@ -12,13 +12,15 @@ const store = useMintyTestStore();
 const { t } = useI18n();
 
 const showGuestModal = ref(false);
-const modalMode = ref('create'); // "create" or "edit"
+const modalMode = ref('create');
 const selectedBookingId = ref(null);
 const selectedGuest = ref(null);
+const nameError = ref('');
+const isLoadingBookings = ref(false);
 
 const guestForm = ref({
     name: '',
-    age: null,
+    age: '',
 });
 
 /**
@@ -54,15 +56,53 @@ function openEditGuestModal(bookingId, guest) {
  * @param {number} guestId
  */
 async function deleteGuestFromBooking(guestId) {
+
+    const confirmed = confirm(
+        'Are you sure you want to remove this guest? This action cannot be undone.'
+    )
+
+    if (!confirmed) return
+
     try {
-
+        isLoadingBookings.value = true;
         await store.deleteGuest(guestId);
-
         await store.getBookings();
-
+        isLoadingBookings.value = false;
         console.log('Guest deleted:', guestId);
     } catch (err) {
         console.error('Error deleting guest:', err);
+    }
+}
+
+/**
+ * Submit guest form (create or update).
+ */
+async function submitGuestForm() {
+    try {
+        if (!guestForm.value.name?.trim()) {
+            nameError.value = 'Name is required';
+
+            setTimeout(() => {
+                nameError.value = '';
+            }, 3000)
+            return;
+        }
+        nameError.value = '';
+        isLoadingBookings.value = true;
+        if (modalMode.value === 'create') {
+
+            await store.addGuest(selectedBookingId.value, {
+                ...guestForm.value,
+                booking_id: selectedBookingId.value
+            });
+        } else {
+            await store.updateGuest(selectedGuest.value.id, guestForm.value);
+        }
+        closeGuestModal();
+    } catch (err) {
+        console.error(err);
+    } finally {
+        isLoadingBookings.value = false;
     }
 }
 
@@ -74,25 +114,6 @@ function closeGuestModal() {
     selectedGuest.value = null;
 };
 
-/**
- * Submit guest form (create or update).
- */
-async function submitGuestForm() {
-    try {
-        if (modalMode.value === 'create') {
-            await store.addGuest(selectedBookingId.value, {
-                ...guestForm.value,
-                booking_id: selectedBookingId.value
-            });
-        } else {
-            await store.updateGuest(selectedGuest.value.id, guestForm.value);
-        }
-        closeGuestModal();
-    } catch (err) {
-        console.error(err);
-    }
-}
-
 /*
 |--------------------------------------------------------------------------
 | Initial data load
@@ -101,13 +122,15 @@ async function submitGuestForm() {
 | Fetch bookings when the page is mounted.
 |
 */
-onMounted(() => {
-    store.getBookings();
-});
+onMounted((async () => {
+    isLoadingBookings.value = true;
+    await store.getBookings();
+    isLoadingBookings.value = false;
+}));
 </script>
 
 <template>
-    <div class="flex flex-col gap-10 container mx-auto px-4 py-8">
+    <div class="relative flex flex-col gap-10 container mx-auto px-4 py-8">
 
         <Head title="Minty Test 2026" />
         <header class="text-center mb-12">
@@ -119,79 +142,137 @@ onMounted(() => {
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             <!-- Iterate over all bookings -->
             <div v-for="booking in store.bookings" :key="booking.id"
-                class=" card h-full overflow-hidden rounded-xl p-4 shadow-md hover:shadow-xl transition-shadow duration-300">
-                <p><strong>ID:</strong> {{ booking.id }}</p>
-                <p><strong>Check-in:</strong> {{ booking.checkin_at }}</p>
-                <p><strong>Check-out:</strong> {{ booking.checkout_at }}</p>
-
-                <!-- Guests -->
-                <div class="flex flex-col gap-4 mt-4  border-t">
-                    <div class="flex items-center gap-1 mt-4">
-                        <strong>Guests:</strong>
-                        <button class="cursor-pointer" title="Add guest" @click="openCreateGuestModal(booking.id)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 20 20"
-                                class="text-green-600">
-                                <path fill="currentColor"
-                                    d="M6 2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4.257a5.5 5.5 0 0 1-1.242-3.084c-.634-.115-1.166-.348-1.58-.684A2.5 2.5 0 0 1 6.5 12.25c0-.69.56-1.25 1.25-1.25h2.507A5.49 5.49 0 0 1 14.5 9a5.5 5.5 0 0 1 1.5.207V4a2 2 0 0 0-2-2zm2.5 2h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1M8 8a2 2 0 1 1 4 0a2 2 0 0 1-4 0m11 6.5a4.5 4.5 0 1 1-9 0a4.5 4.5 0 0 1 9 0m-4-2a.5.5 0 0 0-1 0V14h-1.5a.5.5 0 0 0 0 1H14v1.5a.5.5 0 0 0 1 0V15h1.5a.5.5 0 0 0 0-1H15z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="flex">
-                        <ul class="flex flex-col gap-2 ml-4">
-                            <li v-for="guest in booking.guests" :key="guest.id"
-                                class="flex items-center justify-between gap-4 p-2 hover:bg-blue-300/45 rounded-lg border-b border-b-transparent transition-all duration-300">
-                                <div>
-                                    {{ guest.name }} <span v-if="guest.age">({{ guest.age }} años)</span>
-                                </div>
-                                <div class="flex gap-3">
-                                    <button title="Guest edit" @click="openEditGuestModal(booking.id, guest)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
-                                            viewBox="0 0 512 512" class="cursor-pointer text-blue-600">
-                                            <path fill="currentColor"
-                                                d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2l33.9-33.9l104 104l33.9 33.9l-33.9 33.9l-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3.9 481zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6L58.6 453l86.9-24.1c6.4-1.8 12.2-5.1 17-9.7l-70.6-69.7zm354-146.1l-104-104l-34-33.9l44.9-44.9C366.4 7 384.8-.6 404-.6s37.6 7.6 51.1 21.2l35.7 35.7c13.6 13.6 21.2 32 21.2 51.1s-7.6 37.6-21.2 51.1l-44.9 44.9z" />
-                                        </svg>
-                                    </button>
-                                    <button title="Remove guest" @click="deleteGuestFromBooking(guest.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            class="cursor-pointer text-red-500" viewBox="0 0 24 24">
-                                            <path fill="currentColor"
-                                                d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12l1.41 1.41L13.41 14l2.12 2.12l-1.41 1.41L12 15.41l-2.12 2.12l-1.41-1.41L10.59 14zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </li>
-                        </ul>
+                class="flex flex-col gap-3 card h-full overflow-hidden rounded-xl p-4 shadow-md hover:shadow-xl transition-shadow duration-300">
+                <div class="flex flex-col gap-3">
+                    <p class="text-sm text-muted-foreground"><strong class="text-black">Booking ID:</strong> {{
+                        booking.id }}
+                    </p>
+                    <div class="flex flex-col gap-1">
+                        <p class="text-sm text-muted-foreground"><strong class="text-black">Check-in:</strong> {{
+                            booking.checkin_at }}</p>
+                        <p class="text-sm text-muted-foreground"><strong class="text-black">Check-out:</strong> {{
+                            booking.checkout_at }}</p>
                     </div>
                 </div>
 
-                <!-- Future buttons -->
-                <div class="mt-2 flex gap-2"></div>
+                <div class="bg-border w-full h-0.5"></div>
+
+                <!-- Guests -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex justify-between items-center gap-1 mt-4">
+                        <h4 class="font-semibold font-headline text-lg flex items-center gap-2"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-users w-5 h-5">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>Guests</h4>
+                        <button @click="openCreateGuestModal(booking.id)"
+                            class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm btn-item-actions h-9 rounded-md px-3"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-user-plus h-4 w-4 mr-2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <line x1="19" x2="19" y1="8" y2="14"></line>
+                                <line x1="22" x2="16" y1="11" y2="11"></line>
+                            </svg>Add Guest
+                        </button>
+                    </div>
+                    <div class="flex flex-col gap-3 ">
+                        <div v-for="guest in booking.guests" :key="guest.id"
+                            class="flex justify-between p-2 rounded-md  items-center bg-accent">
+                            <div>
+                                <p v-if="guest.name" class="font-medium text-sm">{{ guest.name }}</p>
+                                <p v-if="guest.age" class="text-xs text-muted-foreground">{{ guest.age }}
+                                    years old</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button @click="openEditGuestModal(booking.id, guest)"
+                                    class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm btn-edit-guest h-8 w-8"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-pencil h-4 w-4">
+                                        <path
+                                            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                        </path>
+                                        <path d="m15 5 4 4"></path>
+                                    </svg>
+                                </button>
+                                <button @click="deleteGuestFromBooking(guest.id)"
+                                    class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-red-600 rounded-md btn-delete-guest text-sm h-8 w-8"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-trash2 h-4 w-4">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        <line x1="10" x2="10" y1="11" y2="17"></line>
+                                        <line x1="14" x2="14" y1="11" y2="17"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Modal Overlay -->
-    <div v-if="showGuestModal" class="fixed inset-0 bg-gray-300 bg-opacity-40 flex justify-center items-center z-50">
-        <!-- Modal Content -->
-        <div class="bg-white rounded-lg p-6 w-80">
-            <h2 class="text-lg font-bold mb-4">
-                {{ modalMode === 'create' ? 'Add Guest' : 'Edit Guest' }}
-            </h2>
 
-            <form @submit.prevent="submitGuestForm">
+    <!-- Spinner loading -->
+    <div v-show="isLoadingBookings" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div class="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-lg">
+            <svg class="animate-spin color-sping h-10 w-10" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+
+            <span class="text-base font-medium text-gray-700">
+                Cargando…
+            </span>
+        </div>
+    </div>
+
+    <!-- Reusable modal for create / edit guest -->
+    <!-- Modal Overlay -->
+    <div v-if="showGuestModal" class="modal-overlay fixed inset-0 flex justify-center items-center z-40">
+
+        <!-- Modal Content -->
+        <div class="flex flex-col gap-8 modal-content rounded-lg shadow-lg p-7 w-full max-w-lg">
+            <div>
+                <h2 class="text-lg font-bold">
+                    {{ modalMode === 'create' ? 'Add Guest' : 'Edit Guest' }}
+                </h2>
+                <p class="text-muted-foreground text-sm">
+                    {{
+                        modalMode === 'create' ? "Enter the new guest's details." : "Update the guest's details below."
+                    }}
+                </p>
+            </div>
+
+            <form @submit.prevent="submitGuestForm" class="flex flex-col gap-3">
                 <div class="mb-3">
-                    <label class="block mb-1">Name</label>
-                    <input v-model="guestForm.name" type="text" class="w-full border rounded px-2 py-1" />
+                    <label class="block mb-1 text-sm">Name</label>
+                    <input v-model="guestForm.name" type="text" class="w-full text-sm px-2 py-2 mt-1.5 input"
+                        placeholder="e.g.Antonio Perez" minlength="1" pattern="[A-Za-zÀ-ÿ\s]+"
+                        @input="guestForm.name = guestForm.name.replace(/[0-9]/g, '')" />
+                    <p v-show="nameError" class="text-sm text-red-600 mt-1 ml-2 min-h-5">{{ nameError || ' ' }}</p>
                 </div>
                 <div class="mb-3">
-                    <label class="block mb-1">Age</label>
-                    <input v-model="guestForm.age" type="number" min="0" class="w-full border rounded px-2 py-1" />
+                    <label class="block mb-1 text-sm">Age</label>
+                    <input v-model="guestForm.age" type="number" class="w-full text-sm px-2 mt-1.5 py-2 input"
+                        placeholder="e.g.35" min="0" max="120" maxlength="3"
+                        @input="guestForm.age = guestForm.age?.toString().slice(0, 3).replace(/\D/g, '')" />
                 </div>
 
                 <div class="flex justify-end gap-2 mt-4">
                     <button type="button" @click="closeGuestModal"
-                        class="cursor-pointer px-3 py-1 rounded border">Cancel</button>
-                    <button type="submit" class="cursor-pointer px-3 py-1 rounded bg-green-600 text-white">
-                        {{ modalMode === 'create' ? 'Add' : 'Update' }}
+                        class="cursor-pointer text-sm px-3 py-2 rounded btn-item-actions">Cancel</button>
+                    <button type="submit" class="cursor-pointer text-sm px-3 py-2 rounded btn-submit" :disabled="false">
+                        {{ modalMode === 'create' ? 'Save' : 'Update' }}
                     </button>
                 </div>
             </form>

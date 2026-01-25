@@ -14,8 +14,8 @@ class GuestController extends Controller
     {
         $request->validate([
             'booking_id' => 'required|exists:bookings,id',
-            'name' => 'required|string|max:255',
-            'age' => 'nullable|integer|min:0'
+            'name' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+            'age' => 'nullable|integer|min:0|max:120'
         ]);
 
         $guest = Guest::create([
@@ -33,8 +33,8 @@ class GuestController extends Controller
     public function update(Request $request, Guest $guest)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'age' => 'nullable|integer|min:0'
+            'name' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+            'age' => 'nullable|integer|min:0|max:120'
         ]);
 
         $guest->update($request->only('name', 'age'));
