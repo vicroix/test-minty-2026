@@ -19,8 +19,8 @@ const nameError = ref('');
 const isLoadingBookings = ref(false);
 const totalBookings = ref(null);
 const totalPages = ref(null);
-const currentPage = ref(1);
-const pagesWithBookings = ref(null);
+const currentPage = ref(9);
+const currentPageReservations = ref(null);
 
 const guestForm = ref({
     name: '',
@@ -118,9 +118,29 @@ function closeGuestModal() {
     selectedGuest.value = null;
 };
 
+function saveCurrentPage(page){
+    currentPage.value = page;
+    countBookingPages();
+}
+
 function countBookingPages() {
+    // calculate total number of pages
     totalBookings.value = store.bookings.length;
     totalPages.value = Math.ceil(totalBookings.value / 6);
+
+    //Show current page
+    for (let index = 1; index <= totalPages.value; index++) {
+        let start = 0;
+        let end = 0;
+        if (index === currentPage.value) {
+            end = 6 * index;
+            start = end - 6;
+            console.log(`Page: ${index}, Start: ${start}, End: ${end}`);
+            currentPageReservations.value = store.bookings.slice(start, end);
+            console.log(currentPageReservations);
+            return;
+        }
+    }
 }
 
 /*
@@ -151,7 +171,7 @@ onMounted((async () => {
 
         <div class="flex gap-6 overflow-hidden justify-center">
             <!-- Iterate over all bookings -->
-            <div v-for="booking in store.bookings" :key="booking.id"
+            <div v-for="booking in currentPageReservations" :key="booking.id"
                 class="flex flex-col gap-3 card h-full rounded-xl p-2 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="flex flex-col gap-3">
                     <p class="text-sm text-muted-foreground"><strong class="text-black">Booking ID:</strong> {{
@@ -234,7 +254,7 @@ onMounted((async () => {
     <!-- Pagination -->
     <div class="flex gap-8 justify-center">
         <template v-for="page in totalPages">
-                <button class="cursor-pointer text-lg hover:text-blue-500">{{ page }}</button>
+            <button @click="saveCurrentPage(page)" class="cursor-pointer text-lg hover:text-blue-500">{{ page }}</button>
         </template>
     </div>
 
