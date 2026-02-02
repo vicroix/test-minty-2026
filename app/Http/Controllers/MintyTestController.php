@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use phpDocumentor\Reflection\Type;
+
+use function PHPSTORM_META\type;
 
 class MintyTestController extends Controller
 {
@@ -19,7 +22,6 @@ class MintyTestController extends Controller
             sleep(2);
 
             $bookings = Booking::with('guests')->get();
-
             return response()->json($bookings);
         } catch (\Exception $e) {
             Log::error('Error fetching bookings: ' . $e->getMessage());

@@ -17,6 +17,10 @@ const selectedBookingId = ref(null);
 const selectedGuest = ref(null);
 const nameError = ref('');
 const isLoadingBookings = ref(false);
+const totalBookings = ref(null);
+const totalPages = ref(null);
+const currentPage = ref(1);
+const pagesWithBookings = ref(null);
 
 const guestForm = ref({
     name: '',
@@ -114,6 +118,11 @@ function closeGuestModal() {
     selectedGuest.value = null;
 };
 
+function countBookingPages() {
+    totalBookings.value = store.bookings.length;
+    totalPages.value = Math.ceil(totalBookings.value / 6);
+}
+
 /*
 |--------------------------------------------------------------------------
 | Initial data load
@@ -125,12 +134,13 @@ function closeGuestModal() {
 onMounted((async () => {
     isLoadingBookings.value = true;
     await store.getBookings();
+    countBookingPages();
     isLoadingBookings.value = false;
 }));
 </script>
 
 <template>
-    <div class="relative flex flex-col gap-10 container mx-auto px-4 py-8">
+    <div class="relative flex flex-col gap-10 container mx-auto px-auto py-8">
 
         <Head title="Minty Test 2026" />
         <header class="text-center mb-12">
@@ -139,10 +149,10 @@ onMounted((async () => {
             <p class="text-muted-foreground mt-2 text-lg">Your modern booking management dashboard.</p>
         </header>
 
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div class="flex gap-6 overflow-hidden justify-center">
             <!-- Iterate over all bookings -->
             <div v-for="booking in store.bookings" :key="booking.id"
-                class="flex flex-col gap-3 card h-full overflow-hidden rounded-xl p-4 shadow-md hover:shadow-xl transition-shadow duration-300">
+                class="flex flex-col gap-3 card h-full rounded-xl p-2 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="flex flex-col gap-3">
                     <p class="text-sm text-muted-foreground"><strong class="text-black">Booking ID:</strong> {{
                         booking.id }}
@@ -219,6 +229,13 @@ onMounted((async () => {
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex gap-8 justify-center">
+        <template v-for="page in totalPages">
+                <button class="cursor-pointer text-lg hover:text-blue-500">{{ page }}</button>
+        </template>
     </div>
 
     <!-- Spinner loading -->
