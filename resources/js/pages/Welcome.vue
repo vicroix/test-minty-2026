@@ -118,7 +118,12 @@ function closeGuestModal() {
     selectedGuest.value = null;
 };
 
-function saveCurrentPage(page){
+
+/**
+ * 
+ * @param page 
+ */
+function saveCurrentPage(page) {
     currentPage.value = page;
     countBookingPages();
 }
@@ -129,18 +134,14 @@ function countBookingPages() {
     totalPages.value = Math.ceil(totalBookings.value / 6);
 
     //Show current page
-    for (let index = 1; index <= totalPages.value; index++) {
-        let start = 0;
-        let end = 0;
-        if (index === currentPage.value) {
-            end = 6 * index;
-            start = end - 6;
-            console.log(`Page: ${index}, Start: ${start}, End: ${end}`);
-            currentPageReservations.value = store.bookings.slice(start, end);
-            console.log(currentPageReservations);
-            return;
-        }
-    }
+    let start = 0;
+    let end = 0;
+
+    end = 6 * currentPage.value;
+    start = end - 6;
+    console.log(`Page: ${currentPage.value}, Start: ${start}, End: ${end}`);
+    currentPageReservations.value = store.bookings.slice(start, end);
+    console.log(currentPageReservations);
 }
 
 /*
@@ -160,104 +161,109 @@ onMounted((async () => {
 </script>
 
 <template>
-    <div class="relative flex flex-col gap-10 container mx-auto px-auto py-8">
+    <div class="flex flex-col gap-14">
+        <div class="relative flex flex-col gap-10 container mx-auto px-auto py-8">
 
-        <Head title="Minty Test 2026" />
-        <header class="text-center mb-12">
-            <h1 class="flex justify-center text-4xl md:text-5xl font-bold text-primary tracking-tight">Manage
-                Bookings</h1>
-            <p class="text-muted-foreground mt-2 text-lg">Your modern booking management dashboard.</p>
-        </header>
+            <Head title="Minty Test 2026" />
+            <header class="text-center mb-12">
+                <h1 class="flex justify-center text-4xl md:text-5xl font-bold text-primary tracking-tight">Manage
+                    Bookings</h1>
+                <p class="text-muted-foreground mt-2 text-lg">Your modern booking management dashboard.</p>
+            </header>
 
-        <div class="flex gap-6 overflow-hidden justify-center">
-            <!-- Iterate over all bookings -->
-            <div v-for="booking in currentPageReservations" :key="booking.id"
-                class="flex flex-col gap-3 card h-full rounded-xl p-2 shadow-md hover:shadow-xl transition-shadow duration-300">
-                <div class="flex flex-col gap-3">
-                    <p class="text-sm text-muted-foreground"><strong class="text-black">Booking ID:</strong> {{
-                        booking.id }}
-                    </p>
-                    <div class="flex flex-col gap-1">
-                        <p class="text-sm text-muted-foreground"><strong class="text-black">Check-in:</strong> {{
-                            booking.checkin_at }}</p>
-                        <p class="text-sm text-muted-foreground"><strong class="text-black">Check-out:</strong> {{
-                            booking.checkout_at }}</p>
+            <div class="flex gap-6 justify-center">
+                <!-- Iterate over all bookings -->
+                <div v-for="booking in currentPageReservations" :key="booking.id"
+                    class="flex flex-col gap-3 card h-full rounded-xl p-2 shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex flex-col gap-3">
+                        <p class="text-sm text-muted-foreground"><strong class="text-black">Booking ID:</strong> {{
+                            booking.id }}
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <p class="text-sm text-muted-foreground"><strong class="text-black">Check-in:</strong> {{
+                                booking.checkin_at }}</p>
+                            <p class="text-sm text-muted-foreground"><strong class="text-black">Check-out:</strong> {{
+                                booking.checkout_at }}</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="bg-border w-full h-0.5"></div>
+                    <div class="bg-border w-full h-0.5"></div>
 
-                <!-- Guests -->
-                <div class="flex flex-col gap-4">
-                    <div class="flex justify-between items-center gap-1 mt-4">
-                        <h4 class="font-semibold font-headline text-lg flex items-center gap-2"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-users w-5 h-5">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>Guests</h4>
-                        <button @click="openCreateGuestModal(booking.id)"
-                            class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm btn-item-actions h-9 rounded-md px-3"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-user-plus h-4 w-4 mr-2">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <line x1="19" x2="19" y1="8" y2="14"></line>
-                                <line x1="22" x2="16" y1="11" y2="11"></line>
-                            </svg>Add Guest
-                        </button>
-                    </div>
-                    <div class="flex flex-col gap-3 ">
-                        <div v-for="guest in booking.guests" :key="guest.id"
-                            class="flex justify-between p-2 rounded-md  items-center bg-accent">
-                            <div>
-                                <p v-if="guest.name" class="font-medium text-sm">{{ guest.name }}</p>
-                                <p v-if="guest.age" class="text-xs text-muted-foreground">{{ guest.age }}
-                                    years old</p>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <button @click="openEditGuestModal(booking.id, guest)"
-                                    class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm btn-edit-guest h-8 w-8"><svg
-                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-pencil h-4 w-4">
-                                        <path
-                                            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
-                                        </path>
-                                        <path d="m15 5 4 4"></path>
-                                    </svg>
-                                </button>
-                                <button @click="deleteGuestFromBooking(guest.id)"
-                                    class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-red-600 rounded-md btn-delete-guest text-sm h-8 w-8"><svg
-                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-trash2 h-4 w-4">
-                                        <path d="M3 6h18"></path>
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                                        <line x1="10" x2="10" y1="11" y2="17"></line>
-                                        <line x1="14" x2="14" y1="11" y2="17"></line>
-                                    </svg>
-                                </button>
+                    <!-- Guests -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex justify-between items-center gap-1 mt-4">
+                            <h4 class="font-semibold font-headline text-lg flex items-center gap-2"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-users w-5 h-5">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>Guests</h4>
+                            <button @click="openCreateGuestModal(booking.id)"
+                                class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm btn-item-actions h-9 rounded-md px-3"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-user-plus h-4 w-4 mr-2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <line x1="19" x2="19" y1="8" y2="14"></line>
+                                    <line x1="22" x2="16" y1="11" y2="11"></line>
+                                </svg>Add Guest
+                            </button>
+                        </div>
+                        <div class="flex flex-col gap-3 overflow-y-scroll">
+                            <div v-for="guest in booking.guests" :key="guest.id"
+                                class="flex justify-between p-2 rounded-md  items-center bg-accent">
+                                <div>
+                                    <p v-if="guest.name" class="font-medium text-sm">{{ guest.name }}</p>
+                                    <p v-if="guest.age" class="text-xs text-muted-foreground">{{ guest.age }}
+                                        years old</p>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button @click="openEditGuestModal(booking.id, guest)"
+                                        class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm btn-edit-guest h-8 w-8"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="lucide lucide-pencil h-4 w-4">
+                                            <path
+                                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                            </path>
+                                            <path d="m15 5 4 4"></path>
+                                        </svg>
+                                    </button>
+                                    <button @click="deleteGuestFromBooking(guest.id)"
+                                        class="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-red-600 rounded-md btn-delete-guest text-sm h-8 w-8"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="lucide lucide-trash2 h-4 w-4">
+                                            <path d="M3 6h18"></path>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                            <line x1="10" x2="10" y1="11" y2="17"></line>
+                                            <line x1="14" x2="14" y1="11" y2="17"></line>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Pagination -->
-    <div class="flex gap-8 justify-center">
-        <template v-for="page in totalPages">
-            <button @click="saveCurrentPage(page)" class="cursor-pointer text-lg hover:text-blue-500">{{ page }}</button>
-        </template>
-    </div>
+        <!-- Pagination -->
+        <div class="flex gap-8 justify-center">
+            <template v-for="page in totalPages">
+                <button @click="saveCurrentPage(page)" class="cursor-pointer text-lg hover:text-blue-500">{{ page
+                    }}</button>
+            </template>
+        </div>
 
+    </div>
     <!-- Spinner loading -->
     <div v-show="isLoadingBookings" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
         <div class="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-lg">
